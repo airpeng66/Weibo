@@ -7,6 +7,10 @@
 //
 
 #import "AppDelegate.h"
+#import "WBTabBarController.h"
+#import "WBNewFeatureController.h"
+#import "WBOAuthViewController.h"
+#define WBVersion @"version"
 
 @interface AppDelegate ()
 
@@ -17,9 +21,38 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    //创建窗口
+    self.window = [[UIWindow alloc]initWithFrame:[UIScreen mainScreen].bounds];
+    
+    /*NSString *currentVersion = [NSBundle mainBundle].infoDictionary[@"CFBundleVersion"];
+    NSString *lastVersion = [[NSUserDefaults standardUserDefaults]objectForKey:WBVersion];
+    if ([currentVersion isEqualToString:lastVersion]) {
+        //创建tabBarviewController
+        WBTabBarController *tabBarVc = [[WBTabBarController alloc]init];
+        
+        //设置窗口的根视图控制器
+        self.window.rootViewController = tabBarVc;
+    }else {
+        WBNewFeatureController *newFeature = [[WBNewFeatureController alloc]init];
+        [[NSUserDefaults standardUserDefaults]setObject:currentVersion forKey:WBVersion];
+        self.window.rootViewController = newFeature;
+    }
+    //将窗口背景色设为黄色
+    //self.window.backgroundColor = [UIColor yellowColor];
+     
+     */
+    
+    WBOAuthViewController *OAuthVC = [[WBOAuthViewController alloc]init];
+    self.window.rootViewController = OAuthVC;
+  
+    
+    //显示窗口
+    [self.window makeKeyAndVisible];
+    
+    
     return YES;
-}
 
+}
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
