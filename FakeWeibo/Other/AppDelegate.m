@@ -10,6 +10,10 @@
 #import "WBTabBarController.h"
 #import "WBNewFeatureController.h"
 #import "WBOAuthViewController.h"
+#import "WBAccount.h"
+#import "WBAccountTool.h"
+#import "WBRootVcTool.h"
+
 #define WBVersion @"version"
 
 @interface AppDelegate ()
@@ -24,26 +28,17 @@
     //创建窗口
     self.window = [[UIWindow alloc]initWithFrame:[UIScreen mainScreen].bounds];
     
-    /*NSString *currentVersion = [NSBundle mainBundle].infoDictionary[@"CFBundleVersion"];
-    NSString *lastVersion = [[NSUserDefaults standardUserDefaults]objectForKey:WBVersion];
-    if ([currentVersion isEqualToString:lastVersion]) {
-        //创建tabBarviewController
-        WBTabBarController *tabBarVc = [[WBTabBarController alloc]init];
-        
-        //设置窗口的根视图控制器
-        self.window.rootViewController = tabBarVc;
-    }else {
-        WBNewFeatureController *newFeature = [[WBNewFeatureController alloc]init];
-        [[NSUserDefaults standardUserDefaults]setObject:currentVersion forKey:WBVersion];
-        self.window.rootViewController = newFeature;
-    }
+    
     //将窗口背景色设为黄色
     //self.window.backgroundColor = [UIColor yellowColor];
-     
-     */
+    if ([WBAccountTool account]) {
+        [WBRootVcTool chooseRootViewController:self.window];
+    }else{
+        WBOAuthViewController *OAuthVC = [[WBOAuthViewController alloc]init];
+        self.window.rootViewController = OAuthVC;
+    }
     
-    WBOAuthViewController *OAuthVC = [[WBOAuthViewController alloc]init];
-    self.window.rootViewController = OAuthVC;
+  
   
     
     //显示窗口

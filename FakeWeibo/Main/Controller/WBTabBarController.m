@@ -71,7 +71,7 @@
     //首页
     WBHomeViewController *home = [[WBHomeViewController alloc]init];
     [self setUpOneChildViewController:home image:[UIImage imageNamed:@"tabbar_home"] selectedImage:[UIImage imageWithOriginName:@"tabbar_home_selected"] title:@"首页"];
-    home.view.backgroundColor = [UIColor greenColor];
+    //home.view.backgroundColor = [UIColor greenColor];
     //消息
     UIViewController *message = [[WBMessageViewController alloc]init];
     [self setUpOneChildViewController:message image:[UIImage imageNamed:@"tabbar_message_center"] selectedImage:[UIImage imageWithOriginName:@"tabbar_message_center_selected"] title:@"消息"];

@@ -14,15 +14,30 @@
 #import "UIView+Frame.h"
 #import "WBPopMenu.h"
 #import "WBOneViewController.h"
+#import "AFNetworking.h"
+#import "WBStatus.h"
+#import "WBAccount.h"
+#import "WBAccountTool.h"
+#import "MJExtension.h"
+#import "MJRefresh.h"
+#import "UIImageView+WebCache.h"
 
 @interface WBHomeViewController ()<WBCoverDelegate>
 
 @property(nonatomic, weak) WBHomeTitle *titleButton;
 @property(nonatomic, strong) WBMenuViewController *menu;
+@property(nonatomic, strong) NSMutableArray *status;
 
 @end
 
 @implementation WBHomeViewController
+
+-(NSMutableArray *)status{
+    if (_status == nil) {
+        _status = [NSMutableArray array];
+    }
+    return _status;
+}
 
 -(WBMenuViewController *)menu{
     if (_menu == nil) {
@@ -35,7 +50,8 @@
     [super viewDidLoad];
     
     [self setUpNavigationBar];
-    
+    self.tableView.mj_header = [MJRefreshNormalHeader headerWithRefreshingTarget:self refreshingAction:@selector(loadNewStatus)];
+    [self.tableView.mj_header beginRefreshing];
     
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
@@ -72,17 +88,60 @@
     // Dispose of any resources that can be recreated.
 }
 
+#pragma mark -请求最新微博
+- (void)loadNewStatus{
+    //创建请求管理者
+    AFHTTPRequestOperationManager *mgr = [AFHTTPRequestOperationManager manager];
+    //创建参数字典
+    NSMutableDictionary *params = [NSMutableDictionary dictionary];
+    if (self.status.count) {
+        //params[@"since_id"] = self.status[0];
+    }
+    params[@"access_token"] = [WBAccountTool account].access_token;
+    
+    [mgr GET:@"https://api.weibo.com/2/statuses/friends_timeline.json" parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject){
+        [self.tableView.mj_header endRefreshing];
+        NSLog(@"%@",responseObject);
+        
+        NSArray *dictArr = responseObject[@"statuses"];
+        NSArray *statuses = (NSMutableArray *)[WBStatus  mj_objectArrayWithKeyValuesArray:dictArr];
+        
+        NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, statuses.count)];
+        
+        [self.status insertObjects:statuses atIndexes:indexSet];
+        
+        [self.tableView reloadData];
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error){
+        
+    }];
+    
+}
+
+
 #pragma mark - Table view data source
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-#warning Incomplete implementation, return the number of sections
-    return 0;
-}
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-#warning Incomplete implementation, return the number of rows
-    return 0;
+
+    return self.status.count;
 }
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    static NSString *ID = @"cell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:ID];
+    
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:ID];
+    }
+    
+    WBStatus *status = self.status[indexPath.row];
+    cell.textLabel.text = status.user.name;
+    [cell.imageView sd_setImageWithURL:status.user.profile_image_url placeholderImage:[UIImage imageNamed:@"timeline_image_placeholder"]];
+    cell.detailTextLabel.text = status.text;
+    return cell;
+}
+
+
 
 - (void)friendSearch{
     NSLog(@"点击了导航栏左边按钮");

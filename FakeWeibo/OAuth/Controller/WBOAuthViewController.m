@@ -9,6 +9,9 @@
 #import "WBOAuthViewController.h"
 #import "MBProgressHUD+MJ.h"
 #import "AFNetworking.h"
+#import "WBAccount.h"
+#import "WBAccountTool.h"
+#import "WBRootVcTool.h"
 
 #define WBAuthorizeBaseUrl @"https://api.weibo.com/oauth2/authorize"
 #define WBClient_id @"837419852"
@@ -72,6 +75,7 @@
     if (range.length) {
         NSString *code = [urlString substringFromIndex:range.location + range.length];
         NSLog(@"code is %@",code);
+        [self accessTokenWithCode:code];
         return NO;
     }
     return YES;
@@ -82,14 +86,32 @@
     // Dispose of any resources that can be recreated.
 }
 
-/*
-#pragma mark - Navigation
+#pragma mark 获取access token
 
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+-(void)accessTokenWithCode:(NSString *)code{
+    //创建请求管理者
+    AFHTTPRequestOperationManager *mgr = [AFHTTPRequestOperationManager manager];
+    NSMutableDictionary *params = [NSMutableDictionary dictionary];
+    params[@"client_id"] = WBClient_id;
+    params[@"client_secret"] = WBClient_Secret;
+    params[@"grant_type"] = @"authorization_code";
+    params[@"code"] = code;
+    params[@"redirect_uri"] = WBRedirect_uri;
+    //发送请求
+    [mgr POST:@"https://api.weibo.com/oauth2/access_token" parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject){
+        //请求成功时调用
+       
+        //字典转模型
+        WBAccount *account = [WBAccount accountWithDict:responseObject];
+        //保存账号信息
+        [WBAccountTool saveAccount:account];
+        [WBRootVcTool chooseRootViewController:WBKeyWindow];
+        NSLog(@"%@", responseObject);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error){
+        //请求失败时调用
+        NSLog(@"%@", error);
+    }];
+    
 }
-*/
 
 @end
