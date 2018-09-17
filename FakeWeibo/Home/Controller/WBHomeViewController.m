@@ -21,6 +21,8 @@
 #import "MJExtension.h"
 #import "MJRefresh.h"
 #import "UIImageView+WebCache.h"
+#import "WBHttpTool.h"
+#import "WBStatusTool.h"
 
 @interface WBHomeViewController ()<WBCoverDelegate>
 
@@ -50,8 +52,12 @@
     [super viewDidLoad];
     
     [self setUpNavigationBar];
+    //上拉刷新
     self.tableView.mj_header = [MJRefreshNormalHeader headerWithRefreshingTarget:self refreshingAction:@selector(loadNewStatus)];
     [self.tableView.mj_header beginRefreshing];
+    
+    //下拉刷新
+    self.tableView.mj_footer = [MJRefreshAutoNormalFooter footerWithRefreshingTarget:self refreshingAction:@selector(loadMoreStatus)];
     
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
@@ -88,35 +94,46 @@
     // Dispose of any resources that can be recreated.
 }
 
-#pragma mark -请求最新微博
+#pragma mark - 请求最新微博
 - (void)loadNewStatus{
     //创建请求管理者
-    AFHTTPRequestOperationManager *mgr = [AFHTTPRequestOperationManager manager];
-    //创建参数字典
-    NSMutableDictionary *params = [NSMutableDictionary dictionary];
-    if (self.status.count) {
-        //params[@"since_id"] = self.status[0];
-    }
-    params[@"access_token"] = [WBAccountTool account].access_token;
     
-    [mgr GET:@"https://api.weibo.com/2/statuses/friends_timeline.json" parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject){
+    //创建参数字典
+    NSString *sinceId = nil;
+    if (self.status.count) {
+        WBStatus *status = self.status[0];
+        sinceId = status.idstr;
+    }
+    
+    [WBStatusTool newStausWithSinceId:sinceId success:^(NSArray *statuses) {
         [self.tableView.mj_header endRefreshing];
-        NSLog(@"%@",responseObject);
-        
-        NSArray *dictArr = responseObject[@"statuses"];
-        NSArray *statuses = (NSMutableArray *)[WBStatus  mj_objectArrayWithKeyValuesArray:dictArr];
         
         NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, statuses.count)];
-        
         [self.status insertObjects:statuses atIndexes:indexSet];
-        
         [self.tableView reloadData];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error){
+    } failure:^(NSError *error) {
         
     }];
+ 
     
-}
+     }
 
+#pragma mark - 加载旧微博
+
+- (void)loadMoreStatus{
+    NSString *maxId = nil;
+    if (self.status.count) {
+        long long max = [[[self.status lastObject] idstr] longLongValue] - 1;
+        maxId = [NSString stringWithFormat:@"%lld",max];
+    }
+    [WBStatusTool moreStatusWithMaxId:maxId success:^(NSArray *statuses) {
+        [self.tableView.mj_footer endRefreshing];
+        [self.status addObjectsFromArray:statuses];
+        [self.tableView reloadData];
+    } failure:^(NSError *error) {
+        
+    }];
+}
 
 #pragma mark - Table view data source
 
@@ -180,5 +197,8 @@
     _titleButton.selected = NO;
 }
 
+- (void)refresh{
+    [self.tableView.mj_header beginRefreshing];
+}
 
 @end

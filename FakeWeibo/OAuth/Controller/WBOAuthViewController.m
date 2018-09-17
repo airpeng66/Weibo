@@ -90,26 +90,10 @@
 
 -(void)accessTokenWithCode:(NSString *)code{
     //创建请求管理者
-    AFHTTPRequestOperationManager *mgr = [AFHTTPRequestOperationManager manager];
-    NSMutableDictionary *params = [NSMutableDictionary dictionary];
-    params[@"client_id"] = WBClient_id;
-    params[@"client_secret"] = WBClient_Secret;
-    params[@"grant_type"] = @"authorization_code";
-    params[@"code"] = code;
-    params[@"redirect_uri"] = WBRedirect_uri;
-    //发送请求
-    [mgr POST:@"https://api.weibo.com/oauth2/access_token" parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject){
-        //请求成功时调用
-       
-        //字典转模型
-        WBAccount *account = [WBAccount accountWithDict:responseObject];
-        //保存账号信息
-        [WBAccountTool saveAccount:account];
+    [WBAccountTool accessTokenWithCode:code success:^{
         [WBRootVcTool chooseRootViewController:WBKeyWindow];
-        NSLog(@"%@", responseObject);
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error){
-        //请求失败时调用
-        NSLog(@"%@", error);
+    } failure:^(NSError *error) {
+        
     }];
     
 }

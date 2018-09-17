@@ -15,9 +15,15 @@
 #import "WBDiscoverViewController.h"
 #import "WBMessageViewController.h"
 #import "WBProfileViewController.h"
+#import "WBUnreedTool.h"
+#import "WBUnreadResult.h"
 
 @interface WBTabBarController ()<WBTabbarDelegate>
 @property (nonatomic,strong) NSMutableArray *items;
+@property (nonatomic, weak) WBHomeViewController *home;
+@property (nonatomic, weak) WBMessageViewController *message;
+@property (nonatomic, weak) WBDiscoverViewController *discover;
+@property (nonatomic, weak) WBProfileViewController *profile;
 @end
 
 
@@ -45,7 +51,7 @@
     [self setUpAllChildViewController];
     
     [self setUpTabBar];
-    
+    [NSTimer scheduledTimerWithTimeInterval:2 target:self selector:@selector(requestUnreadMsgCount) userInfo:nil repeats:YES];
    
 }
 
@@ -62,7 +68,11 @@
     
 }
 -(void)tabBar:(WBTabBar *)tabBar didClickButton:(NSInteger)index{
+    if (index == 0 && self.selectedIndex == index) {
+        [_home refresh];
+    }
     self.selectedIndex = index;
+    
 }
 
 - (void)setUpAllChildViewController{
@@ -71,20 +81,23 @@
     //首页
     WBHomeViewController *home = [[WBHomeViewController alloc]init];
     [self setUpOneChildViewController:home image:[UIImage imageNamed:@"tabbar_home"] selectedImage:[UIImage imageWithOriginName:@"tabbar_home_selected"] title:@"首页"];
+    _home = home;
     //home.view.backgroundColor = [UIColor greenColor];
     //消息
-    UIViewController *message = [[WBMessageViewController alloc]init];
+    WBMessageViewController *message = [[WBMessageViewController alloc]init];
     [self setUpOneChildViewController:message image:[UIImage imageNamed:@"tabbar_message_center"] selectedImage:[UIImage imageWithOriginName:@"tabbar_message_center_selected"] title:@"消息"];
     message.view.backgroundColor = [UIColor blueColor];
+    _message = message;
     //发现
-    UIViewController *discover = [[WBDiscoverViewController alloc]init];
+    WBDiscoverViewController *discover = [[WBDiscoverViewController alloc]init];
     [self setUpOneChildViewController:discover image:[UIImage imageNamed:@"tabbar_discover"] selectedImage:[UIImage imageWithOriginName:@"tabbar_discover_selected"] title:@"发现"];
     discover.view.backgroundColor = [UIColor purpleColor];
-    
+    _discover = discover;
     //我的
-    UIViewController *profile = [[WBProfileViewController alloc]init];
+    WBProfileViewController *profile = [[WBProfileViewController alloc]init];
     [self setUpOneChildViewController:profile image:[UIImage imageNamed:@"tabbar_profile"] selectedImage:[UIImage imageWithOriginName:@"tabbar_profile_selected"] title:@"我"];
     profile.view.backgroundColor = [UIColor whiteColor];
+    _profile = profile;
 }
 
 - (void)setUpOneChildViewController:(UIViewController *)vc image:(UIImage *)image selectedImage:(UIImage *)selectedImage title:(NSString *)title{
@@ -92,18 +105,27 @@
     vc.title = title;
     vc.tabBarItem.image = image;
     vc.tabBarItem.selectedImage = selectedImage;
-    vc.tabBarItem.badgeValue = @"6";
-    
     WBNavigationController *nav = [[WBNavigationController alloc] initWithRootViewController:vc];
-    
-   
-   
     [self addChildViewController:nav];
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
+#pragma mark - 请求未读消息数
+
+- (void)requestUnreadMsgCount{
+    [WBUnreedTool UnreadWithSuccess:^(WBUnreadResult *result) {
+        _home.tabBarItem.badgeValue = [NSString stringWithFormat:@"%d",result.status];
+        _message.tabBarItem.badgeValue = [NSString stringWithFormat:@"%d",result.messageCount];
+        _profile.tabBarItem.badgeValue = [NSString stringWithFormat:@"%d", result.follower];
+        [UIApplication sharedApplication].applicationIconBadgeNumber = result.totalCount;
+    } failure:^(NSError *error) {
+        
+    }];
+}
+
 
 /*-(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
