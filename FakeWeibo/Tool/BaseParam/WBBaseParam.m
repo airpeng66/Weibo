@@ -9,12 +9,20 @@
 #import "WBBaseParam.h"
 #import "WBAccountTool.h"
 #import "WBAccount.h"
+
+
+
+
+
 @implementation WBBaseParam
 
 + (instancetype)param{
+    
+    NSLog(@"ngjkewg");
     WBBaseParam *param = [[self alloc]init];
     param.access_token = [WBAccountTool account].access_token;
     return param;
+    
 }
 
 @end
